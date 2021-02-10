@@ -5,7 +5,7 @@ import reactor.core.publisher.Flux;
 
 public interface EventUnicastService {
 
-    void onNext(Event next);
+    void onNext(String next);
 
-    Flux<Event> getMessages();
+    Flux<String> getMessages();
 }

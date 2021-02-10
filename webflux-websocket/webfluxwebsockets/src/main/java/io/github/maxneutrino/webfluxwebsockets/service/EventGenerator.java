@@ -14,15 +14,17 @@ public class EventGenerator {
 
     private EventUnicastService eventUnicastService;
 
+    private int count;
+
     @Autowired
     public EventGenerator(EventUnicastService eventUnicastService) {
         this.eventUnicastService = eventUnicastService;
     }
 
-    @Scheduled(initialDelay = 1000, fixedDelay = 1000)
+    @Scheduled(fixedDelay = 3000)
     public void generateEvent() {
-        int count = counter.getAndIncrement();
+        count++;
         Event event = new Event("event", count);
-        eventUnicastService.onNext(event);
+        eventUnicastService.onNext(String.valueOf(count));
     }
 }

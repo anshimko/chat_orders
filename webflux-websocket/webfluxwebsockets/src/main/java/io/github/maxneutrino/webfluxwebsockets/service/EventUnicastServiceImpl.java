@@ -8,15 +8,15 @@ import reactor.core.publisher.Flux;
 @Service
 public class EventUnicastServiceImpl implements EventUnicastService {
 
-    private EmitterProcessor<Event> processor = EmitterProcessor.create();
+    private EmitterProcessor<String> processor = EmitterProcessor.create();
 
     @Override
-    public void onNext(Event next) {
+    public void onNext(String next) {
         processor.onNext(next);
     }
 
     @Override
-    public Flux<Event> getMessages() {
+    public Flux<String> getMessages() {
         return processor.publish().autoConnect();
     }
 }
