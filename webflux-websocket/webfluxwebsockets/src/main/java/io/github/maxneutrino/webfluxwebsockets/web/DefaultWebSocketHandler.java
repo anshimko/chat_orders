@@ -1,8 +1,5 @@
 package io.github.maxneutrino.webfluxwebsockets.web;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.maxneutrino.webfluxwebsockets.service.EventUnicastService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
@@ -11,40 +8,31 @@ import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
 @Component
 public class DefaultWebSocketHandler implements WebSocketHandler {
 
-    private EventUnicastService eventUnicastService;
-
-    private ObjectMapper objectMapper;
+    private final Flux<String> outputEvents;
+    private final WebSocketMessageSubscriber subscriber;
 
     @Autowired
-    public DefaultWebSocketHandler(EventUnicastService eventUnicastService, ObjectMapper objectMapper) {
-        this.eventUnicastService = eventUnicastService;
-        this.objectMapper = objectMapper;
+    public DefaultWebSocketHandler(Flux<String> events, WebSocketMessageSubscriber subscriber) {
+        this.outputEvents = events;
+        this.subscriber = subscriber;
     }
 
+    /*
+     * how do it  https://blog.monkey.codes/how-to-build-a-chat-app-using-webflux-websockets-react/
+     */
     @Override
     public Mono<Void> handle(WebSocketSession session) {
-        Flux<WebSocketMessage> messages = session.receive()
-                .doOnNext(ses -> System.out.println(ses.getPayloadAsText()))
-                .flatMap(message -> {
-                    // or read message here
-                    eventUnicastService.onNext(message.getPayloadAsText());
-                    return eventUnicastService.getMessages();
-                })
-                .flatMap(o -> {
-                    try {
-                        return Mono.just(objectMapper.writeValueAsString(o));
-                    } catch (JsonProcessingException e) {
-                        return Mono.error(e);
-                    }
-                })
-                .map(session::textMessage)
-                .share();
-        return session.send(messages);
+
+        return session.receive()
+                .map(WebSocketMessage::getPayloadAsText)
+                .doOnNext(subscriber::onNext)
+                .doOnError(subscriber::onError)
+                .doOnComplete(subscriber::onComplete)
+                .zipWith(session.send(outputEvents.map(session::textMessage)))
+                .then();
     }
+
 }

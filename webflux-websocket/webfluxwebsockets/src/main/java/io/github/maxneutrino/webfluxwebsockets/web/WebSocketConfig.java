@@ -14,7 +14,7 @@ import java.util.Map;
 @Configuration
 public class WebSocketConfig {
 
-    private WebSocketHandler webSocketHandler;
+    private final WebSocketHandler webSocketHandler;
 
     @Autowired
     public WebSocketConfig(WebSocketHandler webSocketHandler) {
@@ -27,7 +27,6 @@ public class WebSocketConfig {
         Map<String, WebSocketHandler> map = Map.of(path, webSocketHandler);
         return new SimpleUrlHandlerMapping(map, -1);
     }
-
 
     @Bean
     public HandlerAdapter wsHandlerAdapter() {
